@@ -1,0 +1,5 @@
+int main () {
+    float test = 9 ;
+    int i = 0 ;
+    printf ( "Sum of " + test + "and" + i + "is "+ ( test + i ) ) ;
+}

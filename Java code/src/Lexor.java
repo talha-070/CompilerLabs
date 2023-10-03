@@ -1,0 +1,155 @@
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.regex.Pattern;
+
+public class Lexor {
+    // two pointers named ch and temp
+    // two buffer lexical analyzer implemented
+    // one pointer remains still while the other pointer keeps moving
+
+    public static void main(String[] args) {
+        // write your code here
+        ArrayList<String> keywords = new ArrayList<>();
+
+        //Defining types
+        keywords.add("int");
+        keywords.add("float");
+        keywords.add("while");
+        keywords.add("main");
+        keywords.add("if");
+        keywords.add("else");
+        keywords.add("new");
+
+        //Pushing required keywords
+        Pattern constants = Pattern.compile("^[0-9][0-9]*(([\\.][0-9][0-9]*)?([e][+|-][0-9][0-9]*)?)?$");
+        Pattern variables = Pattern.compile("^[A-Za-z|_][A-Za-z|0-9]*$");
+        Pattern operators = Pattern.compile("^[-,*,+,/,>,<,&,|,=]$");
+
+        ArrayList<Node> data = new ArrayList<>();
+
+        File file = new File("C:\\Users\\talha\\IdeaProjects\\CClabs\\test.txt");
+        // opened the test code file
+        try {
+            // scanner to read the file
+            Scanner read = new Scanner(file);
+
+            int i = 1; // to note the line number
+            while (read.hasNext()) {
+
+                // looping over the input file
+                String line = read.nextLine(); // reading each next line
+                String temp = "";
+                boolean qoute = false; // checking if the input is a string to there can be soaces in a strin to maintain this
+
+                for (char ch : line.toCharArray()) { // first buffer pointer
+                    if (ch == '(' || ch == ')' || ch == '{' || ch == '}') {
+                        // case 1 if the input is brackets
+                        boolean flag = true;
+
+                        // check if it already exists in the list then increment it
+                        for (Node n : data) {
+                            if (n.data.equals("" + ch)) {
+                                n.count++;
+                                flag = false;
+                                break;
+                            }
+                        }
+                        if (flag) {
+                            // if not already added add the lexem in the table
+                            data.add(new Node("" + ch, "Brackets", i));
+                        }
+                        temp = "";
+                        continue;
+
+                    } else if (ch == '\"' && !qoute) {// case found an opening qoutation
+                        qoute = true;
+                    } else if (ch == '\"' && qoute) {// case found closing braket
+                        temp += ch;
+                        data.add(new Node(temp, "String", i));// add the string to the list
+
+                        // as string are not checked for repetation so just add them
+                        temp = "";
+                        qoute = false;
+                        continue;
+                    } else if (ch == ' ' && !qoute) {
+                        // case found a space
+                        if (temp.equals(" ")) { // sub case check if the second pointer if pointing to a
+                            // substring that is all spaces if yes rest the pointers and continue to next iteration
+                            temp = "";
+                            continue;
+                        }
+                        boolean flag = true; // checking if not already in the data table
+                        for (Node n : data) {
+                            if (n.data.equals(temp)) {
+                                n.count++; // if found increase the count
+                                flag = false;
+                                break;
+                            }
+                        }
+                        if (flag) { // case if not found in data table
+                            if (keywords.contains(temp)) { // sub case would be a keyword
+                                data.add(new Node(temp, "Keyword", i));
+                                temp = "";
+                                continue;
+                            }
+                            if (constants.matcher(temp).find()) { // sub case would be a constant
+                                data.add(new Node(temp, "Constant", i));
+                                temp = "";
+                                continue;
+                            }
+                            if (variables.matcher(temp).find()) { // sub case would be a variable
+                                data.add(new Node(temp, "Variable", i));
+                                temp = "";
+                                continue;
+                            }
+                            if (operators.matcher(temp).find()) { // sub case would be an operator
+                                data.add(new Node(temp, "Operator", i));
+                                temp = "";
+                                continue;
+                            }
+                            // if any sub case match then continue to next point after resetting the pointers
+                        }
+                        temp = "";
+                    }
+                    temp += ch; //  2nd point to store the substring
+                }
+                i++;
+            }
+            System.out.println("---------------------------------------------------------------------------------------------");
+            System.out.printf("%5s %14s %14s %15s", "Lexem", "Type", "Line num", "Repetition");
+            System.out.println();
+            System.out.println("---------------------------------------------------------------------------------------------");
+            for (Node n : data) { // printing the content in the data table
+                System.out.format("%7s %14s %7s %10s", n.data, n.type, n.line, n.count);
+                System.out.println();
+//                System.out.println(n.toString());
+            }
+            System.out.println("----------------------------------------------------------------------------------------------");
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+}
+
+class Node {
+
+    // lexem class
+    String data;
+    int count;
+    String type;
+    int line;
+
+    public Node(String data, String type, int line) {
+        this.data = data;
+        this.type = type;
+        this.line = line;
+        this.count = 1;
+    }
+
+    // method to convert a lexem row into string to print it on console
+    public String toString() {
+        return "-------------\nLexem: " + data + "\nType: " + type + " Found on Line: " + line + " Repeated: " + count + " times: " ;
+    }
+
+}
